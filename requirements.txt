@@ -1,0 +1,16 @@
+# 注意：这里使用的是 CUDA 12.8 对应的 PyTorch 版本。
+# 如果服务器 nvidia-smi 显示的 CUDA 版本不是 12.8，请根据实际情况修改 cu128。
+--extra-index-url https://download.pytorch.org/whl/cu128
+
+torch==2.7.0+cu128
+torchvision==0.22.0+cu128
+torchaudio==2.7.0+cu128
+
+transformers>=4.40.0
+peft>=0.10.0
+accelerate>=0.28.0
+sentence-transformers>=3.0.0
+numpy
+tqdm
+scikit-learn
+pyyaml

@@ -1,0 +1,89 @@
+# 说明：
+# 本配置文件仅用于记录和说明实验参数，当前 demo 代码不会自动读取该文件。
+# 实际运行时，训练和评估参数由 scripts/ 目录下的 .sh 脚本以及命令行环境变量控制。
+# 例如：BATCH_SIZE、EPOCHS、MAX_TRAIN_SAMPLES、MAX_EVAL_SAMPLES 等。
+
+project: rag_exp1
+
+data:
+  train_stage1: data/dpr/biencoder-nq-train.json.gz
+  train_stage2: data/dpr/biencoder-nq-adv-hn-train.json.gz
+  dev: data/dpr/biencoder-nq-dev.json.gz
+
+model:
+  base_model: models/bert-base-uncased
+  bge_model: models/bge-base-en-v1.5
+  pooling: mean
+  normalize: true
+  embedding_dim: 768
+
+lora:
+  r: 16
+  alpha: 32
+  dropout: 0.05
+  target_modules: query,value
+
+train:
+  max_query_length: 64
+  max_passage_length: 256
+  max_train_samples: 0
+  epochs: 3
+  batch_size: 64
+  grad_accum_steps: 2
+  effective_batch_size: 128
+  temperature: 0.05
+  precision: fp16
+  num_workers: 2
+  max_grad_norm: 1.0
+  warmup_ratio: 0.06
+  weight_decay: 0.01
+  log_steps: 20
+
+stage1:
+  train_path: data/dpr/biencoder-nq-train.json.gz
+  output_dir: outputs/stage1
+  stage: 1
+  lr: 2.0e-5
+  negative_type: normal
+  resume_adapter: null
+
+stage2:
+  train_path: data/dpr/biencoder-nq-adv-hn-train.json.gz
+  output_dir: outputs/stage2
+  stage: 2
+  lr: 5.0e-6
+  negative_type: hard
+  resume_adapter: outputs/stage1
+
+eval:
+  eval_path: data/dpr/biencoder-nq-dev.json.gz
+  max_eval_samples: 500
+  eval_batch_size: 64
+  query_batch_size: 64
+  passage_batch_size: 128
+  bge_batch_size: 128
+  metrics:
+    - mrr@10
+    - recall@1
+    - recall@5
+    - recall@10
+    - recall@20
+    - recall@30
+    - recall@50
+
+outputs:
+  raw_bert_json: results/bert_raw.json
+  raw_bert_csv: results/bert_raw.csv
+  stage1_json: results/lora_stage1.json
+  stage1_csv: results/lora_stage1.csv
+  stage2_json: results/lora_stage2.json
+  stage2_csv: results/lora_stage2.csv
+  bge_json: results/bge_base_en_v15.json
+  bge_csv: results/bge_base_en_v15.csv
+
+runtime:
+  cuda_visible_devices: 0
+  pytorch_cuda_alloc_conf: expandable_segments:True
+  seed: 42
+
+
