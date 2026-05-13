@@ -1,7 +1,5 @@
 # 实验一：BERT Retriever 训练与评估
 
-# 实验一：BERT Retriever 训练与评估
-
 本目录实现 RAG 作业中的实验一：BERT Retriever 训练与评估。
 
 本实验的目标是将原始 `bert-base-uncased` 训练成一个 dense retriever，并观察普通负例训练、hard negative 训练对检索效果的影响。同时使用 `BAAI/bge-base-en-v1.5` 作为成熟 embedding 模型进行对比。
