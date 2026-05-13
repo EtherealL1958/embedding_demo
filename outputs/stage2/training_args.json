@@ -1,0 +1,18 @@
+{
+  "base_model": "models/bert-base-uncased",
+  "resume_adapter": "outputs/stage1",
+  "train_path": "data/dpr/biencoder-nq-adv-hn-train.json.gz",
+  "stage": 2,
+  "max_train_samples": 50000,
+  "max_query_length": 64,
+  "max_passage_length": 256,
+  "epochs": 1,
+  "batch_size": 32,
+  "grad_accum_steps": 1,
+  "lr": 5e-06,
+  "temperature": 0.05,
+  "lora_r": 16,
+  "lora_alpha": 32,
+  "lora_dropout": 0.05,
+  "elapsed_seconds": 203.78929018974304
+}
