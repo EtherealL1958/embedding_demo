@@ -35,7 +35,6 @@ def parse_args():
 
 def evaluate_one_batch(model, tokenizer, batch, args, device):
     """
-    TODO:
     对一个 eval batch 完成候选集排序评估。
 
     需要完成：
@@ -46,9 +45,44 @@ def evaluate_one_batch(model, tokenizer, batch, args, device):
     5. 返回 rows 和 valid_count。
     """
 
-    raise NotImplementedError(
-        "TODO: implement evaluate_one_batch(): encode queries/passages, score candidates, compute ranking metrics."
+    rows = []
+    valid_count = 0
+    questions = [item["question"] for item in batch]
+
+    q_embs = encode_texts(
+        model=model,
+        tokenizer=tokenizer,
+        texts=questions,
+        max_length=args.max_query_length,
+        batch_size=args.query_batch_size,
+        device=device,
     )
+
+    for item, q_emb in zip(batch, q_embs):
+        passages = item["candidate_passages"]
+        if not passages:
+            continue
+
+        p_embs = encode_texts(
+            model=model,
+            tokenizer=tokenizer,
+            texts=passages,
+            max_length=args.max_passage_length,
+            batch_size=args.passage_batch_size,
+            device=device,
+        )
+
+        scores = torch.matmul(p_embs, q_emb).numpy()
+        row = ranking_metrics_from_scores(
+            scores=scores,
+            positive_indices=item["positive_indices"],
+            recall_ks=(1, 5, 10, 20, 30, 50),
+            mrr_k=10,
+        )
+        rows.append(row)
+        valid_count += 1
+
+    return rows, valid_count
 
 
 def run_evaluation(model, tokenizer, loader, args, device):

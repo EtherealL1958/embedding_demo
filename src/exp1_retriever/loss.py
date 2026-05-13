@@ -18,8 +18,7 @@ class ContrastiveRetrievalLoss(nn.Module):
     第 i 个 query 的正确 passage 是第 i 个 positive。
     因此 labels = [0, 1, 2, ..., B-1]
 
-    TODO:
-    请在 forward 中完成：
+    forward 完成：
     1. 拼接 positive passages 和 negative passages；
     2. 计算 query 与所有 passages 的相似度矩阵；
     3. 构造 labels；
@@ -42,33 +41,15 @@ class ContrastiveRetrievalLoss(nn.Module):
             logits: [B, num_passages]，query 和 passage 的相似度矩阵
         """
 
-        # TODO 1:
-        # 如果 neg_emb 不为 None，将 pos_emb 和 neg_emb 在 batch 维度拼接；
-        # 否则只使用 pos_emb 作为 passages。
-        #
-        # 提示：
-        # passages 的形状应为 [B, D] 或 [2B, D]
-        passages = None
+        if neg_emb is not None:
+            passages = torch.cat([pos_emb, neg_emb], dim=0)
+        else:
+            passages = pos_emb
 
-        # TODO 2:
-        # 计算 q_emb 和 passages 的相似度矩阵。
-        #
-        # 提示：
-        # q_emb shape:    [B, D]
-        # passages shape: [N, D]
-        # logits shape:   [B, N]
-        # 注意除以 temperature。
-        logits = None
+        logits = torch.matmul(q_emb, passages.t()) / self.temperature
 
-        # TODO 3:
-        # 构造 labels。
-        #
-        # 第 i 个 query 的正确 passage 是第 i 个 positive，
-        # 所以 labels 应该是 [0, 1, 2, ..., B-1]。
-        labels = None
+        labels = torch.arange(q_emb.size(0), device=q_emb.device)
 
-        # TODO 4:
-        # 使用 F.cross_entropy 计算 loss。
-        loss = None
+        loss = F.cross_entropy(logits, labels)
 
         return loss, logits

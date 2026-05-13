@@ -15,7 +15,6 @@ except Exception:
 
 def mean_pooling(last_hidden_state: torch.Tensor, attention_mask: torch.Tensor) -> torch.Tensor:
     """
-    TODO:
     使用 attention_mask 排除 padding token，
     对有效 token 的 hidden states 做 mean pooling。
 
@@ -26,7 +25,10 @@ def mean_pooling(last_hidden_state: torch.Tensor, attention_mask: torch.Tensor) 
     输出：
         pooled embedding:  [B, H]
     """
-    raise NotImplementedError("TODO: implement mean_pooling.")
+    mask = attention_mask.unsqueeze(-1).to(dtype=last_hidden_state.dtype)
+    summed = (last_hidden_state * mask).sum(dim=1)
+    counts = mask.sum(dim=1).clamp(min=1e-9)
+    return summed / counts
 
 
 class DPRBiEncoder(nn.Module):
@@ -57,9 +59,7 @@ class DPRBiEncoder(nn.Module):
         )
 
         if self.normalize:
-            # TODO:
-            # 对 pooled embedding 做 L2 normalization。
-            raise NotImplementedError("TODO: apply L2 normalization.")
+            pooled = F.normalize(pooled, p=2, dim=-1)
 
         return pooled
 
@@ -78,7 +78,6 @@ def apply_lora_to_encoder(
     lora_target_modules: str,
 ) -> nn.Module:
     """
-    TODO:
     给 BERT encoder 添加 LoRA adapter。
 
     要求：
@@ -91,19 +90,23 @@ def apply_lora_to_encoder(
     if LoraConfig is None or get_peft_model is None:
         raise ImportError("peft 没有安装，无法使用 LoRA。")
 
-    # TODO 1:
-    # 将形如 "query,value" 的字符串转成 ["query", "value"]
-    target_modules = None
+    target_modules = [
+        module.strip()
+        for module in lora_target_modules.split(",")
+        if module.strip()
+    ]
+    if not target_modules:
+        raise ValueError("lora_target_modules 不能为空。")
 
-    # TODO 2:
-    # 构造 LoraConfig
-    # 需要设置：
-    # r, lora_alpha, lora_dropout, target_modules, bias="none"
-    lora_config = None
+    lora_config = LoraConfig(
+        r=lora_r,
+        lora_alpha=lora_alpha,
+        lora_dropout=lora_dropout,
+        target_modules=target_modules,
+        bias="none",
+    )
 
-    # TODO 3:
-    # 使用 get_peft_model 将 LoRA 注入 encoder
-    encoder = None
+    encoder = get_peft_model(encoder, lora_config)
 
     return encoder
 

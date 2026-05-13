@@ -1,4 +1,5 @@
 import argparse
+import math
 import os
 import time
 
@@ -90,7 +91,6 @@ def build_dataloader(args, tokenizer):
 
 def build_optimizer_and_scheduler(model, loader, args):
     """
-    TODO:
     构建 AdamW optimizer 和 linear warmup scheduler。
 
     要求：
@@ -100,14 +100,32 @@ def build_optimizer_and_scheduler(model, loader, args):
     4. 返回 optimizer, scheduler。
     """
 
-    raise NotImplementedError(
-        "TODO: build optimizer and scheduler in build_optimizer_and_scheduler()."
+    trainable_params = [
+        p for p in model.parameters()
+        if p.requires_grad
+    ]
+
+    optimizer = torch.optim.AdamW(
+        trainable_params,
+        lr=args.lr,
+        weight_decay=args.weight_decay,
     )
+
+    steps_per_epoch = math.ceil(len(loader) / args.grad_accum_steps)
+    total_steps = max(1, steps_per_epoch * args.epochs)
+    warmup_steps = int(total_steps * args.warmup_ratio)
+
+    scheduler = get_linear_schedule_with_warmup(
+        optimizer,
+        num_warmup_steps=warmup_steps,
+        num_training_steps=total_steps,
+    )
+
+    return optimizer, scheduler
 
 
 def compute_train_loss(model, batch, loss_fn, args, device, use_amp, dtype):
     """
-    TODO:
     完成一次 forward，并返回用于 backward 的 loss。
 
     要求：
@@ -118,14 +136,26 @@ def compute_train_loss(model, batch, loss_fn, args, device, use_amp, dtype):
     5. 返回 loss。
     """
 
-    raise NotImplementedError(
-        "TODO: compute forward loss in compute_train_loss()."
-    )
+    batch = move_to_device(batch, device)
+
+    with torch.autocast(
+        device_type=device.type,
+        dtype=dtype,
+        enabled=use_amp,
+    ):
+        q_emb, pos_emb, neg_emb = model(
+            batch["query"],
+            batch["positive"],
+            batch["negative"],
+        )
+        loss, _ = loss_fn(q_emb, pos_emb, neg_emb)
+        loss = loss / args.grad_accum_steps
+
+    return loss
 
 
 def optimizer_update(model, optimizer, scheduler, scaler, args):
     """
-    TODO:
     完成一次 optimizer 更新。
 
     要求：
@@ -137,9 +167,15 @@ def optimizer_update(model, optimizer, scheduler, scaler, args):
     6. 清空梯度。
     """
 
-    raise NotImplementedError(
-        "TODO: implement optimizer update in optimizer_update()."
+    scaler.unscale_(optimizer)
+    clip_grad_norm_(
+        [p for p in model.parameters() if p.requires_grad],
+        args.max_grad_norm,
     )
+    scaler.step(optimizer)
+    scaler.update()
+    scheduler.step()
+    optimizer.zero_grad(set_to_none=True)
 
 
 def train_loop(model, loader, loss_fn, optimizer, scheduler, scaler, args, device):
@@ -153,6 +189,8 @@ def train_loop(model, loader, loss_fn, optimizer, scheduler, scaler, args, devic
 
     for epoch in range(args.epochs):
         pbar = tqdm(loader, desc=f"epoch {epoch + 1}/{args.epochs}")
+
+        has_pending_grad = False
 
         for step, batch in enumerate(pbar, start=1):
             if batch is None:
@@ -169,6 +207,7 @@ def train_loop(model, loader, loss_fn, optimizer, scheduler, scaler, args, devic
             )
 
             scaler.scale(loss).backward()
+            has_pending_grad = True
 
             if step % args.grad_accum_steps == 0:
                 optimizer_update(
@@ -195,6 +234,19 @@ def train_loop(model, loader, loss_fn, optimizer, scheduler, scaler, args, devic
                     )
 
                     running_loss = 0.0
+
+                has_pending_grad = False
+
+        if has_pending_grad:
+            optimizer_update(
+                model=model,
+                optimizer=optimizer,
+                scheduler=scheduler,
+                scaler=scaler,
+                args=args,
+            )
+            global_step += 1
+            running_loss += loss.item() * args.grad_accum_steps
 
     return global_step
 

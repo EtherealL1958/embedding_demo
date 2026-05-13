@@ -82,10 +82,12 @@ class DPRTrainDataset(Dataset):
         hard_negs = item.get("hard_negative_ctxs", []) or []
         hard_negs = self._external_hard_negs(idx) + hard_negs
 
-        # TODO: 根据训练阶段选择负例。
-        # stage=1 使用普通负例 normal_negs；
-        # stage=2 优先使用困难负例 hard_negs，没有时退回 normal_negs。
-        raise NotImplementedError("TODO: choose neg_pool for stage1/stage2")
+        if self.stage == 1:
+            neg_pool = normal_negs
+        elif self.stage == 2:
+            neg_pool = hard_negs if hard_negs else normal_negs
+        else:
+            raise ValueError(f"Unsupported training stage: {self.stage}")
 
         if not neg_pool:
             return None

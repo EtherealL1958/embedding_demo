@@ -10,7 +10,6 @@ def ranking_metrics_from_scores(
     mrr_k: int = 10,
 ) -> Dict[str, float]:
     """
-    TODO:
     根据候选 passage 的 scores 和正样本下标 positive_indices，
     计算 Recall@k 和 MRR@k。
 
@@ -40,24 +39,20 @@ def ranking_metrics_from_scores(
         out[f"mrr@{mrr_k}"] = 0.0
         return out
 
-    # TODO 1:
-    # 按照 score 从大到小排序，得到 ranked_indices。
-    # 提示：np.argsort 默认是从小到大。
-    ranked_indices = None
+    ranked_indices = np.argsort(-scores)
 
     out = {}
 
-    # TODO 2:
-    # 计算 Recall@k。
-    # Recall@k = Top-k 中命中的正样本数 / 全部正样本数。
     for k in recall_ks:
-        out[f"recall@{k}"] = None
+        top_k = ranked_indices[:k]
+        hits = sum(1 for idx in top_k if int(idx) in positive_set)
+        out[f"recall@{k}"] = float(hits / len(positive_set))
 
-    # TODO 3:
-    # 计算 MRR@mrr_k。
-    # 找到 Top-mrr_k 内第一个正样本的排名 rank，
-    # 若存在，则 RR = 1 / rank；否则 RR = 0。
-    rr = None
+    rr = 0.0
+    for rank, idx in enumerate(ranked_indices[:mrr_k], start=1):
+        if int(idx) in positive_set:
+            rr = 1.0 / rank
+            break
 
     out[f"mrr@{mrr_k}"] = rr
     return out
