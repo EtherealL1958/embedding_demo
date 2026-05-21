@@ -18,10 +18,10 @@ model:
   embedding_dim: 768
 
 lora:
-  r: 16
-  alpha: 32
+  r: 32
+  alpha: 64
   dropout: 0.05
-  target_modules: query,value
+  target_modules: query,key,value,dense,intermediate.dense,output.dense
 
 train:
   max_query_length: 64
