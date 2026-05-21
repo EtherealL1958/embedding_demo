@@ -20,9 +20,9 @@ python -m src.exp1_retriever.train \
   --grad_accum_steps "${GRAD_ACCUM_STEPS:-1}" \
   --lr "${LR:-2e-5}" \
   --temperature 0.05 \
-  --lora_r 16 \
-  --lora_alpha 32 \
+  --lora_r 32 \
+  --lora_alpha 64 \
   --lora_dropout 0.05 \
   --precision "${PRECISION:-fp16}" \
-  --num_workers 2 \
+  --num_workers 4 \
   --log_steps 20

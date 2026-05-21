@@ -3,16 +3,16 @@
   "resume_adapter": null,
   "train_path": "data/dpr/biencoder-nq-train.json.gz",
   "stage": 1,
-  "max_train_samples": 50000,
+  "max_train_samples": 100000,
   "max_query_length": 64,
   "max_passage_length": 256,
-  "epochs": 1,
+  "epochs": 2,
   "batch_size": 32,
   "grad_accum_steps": 1,
   "lr": 2e-05,
   "temperature": 0.05,
-  "lora_r": 16,
-  "lora_alpha": 32,
+  "lora_r": 32,
+  "lora_alpha": 64,
   "lora_dropout": 0.05,
-  "elapsed_seconds": 208.19973278045654
+  "elapsed_seconds": 481.90606904029846
 }
