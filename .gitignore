@@ -1,8 +1,36 @@
+# OS files
+.DS_Store
+**/.DS_Store
+Thumbs.db
+
+# Python caches
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# Logs
+*.log
+logs/
+
+# Local data, models, and generated artifacts
 data/
 models/
+outputs/
+indexes/
+results/
 
-__pycache__/
-*.pyc
-*.pyo
-
-*.log
+# Large model/data files if they are created outside ignored directories
+*.bin
+*.safetensors
+*.pt
+*.pth
+*.onnx
+*.json.gz
+*.tsv.zip
+*.npy
+*.faiss

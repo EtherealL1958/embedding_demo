@@ -6,6 +6,8 @@ transformers>=4.40.0
 peft>=0.10.0
 accelerate>=0.28.0
 sentence-transformers>=3.0.0
+faiss-cpu
+rouge-score
 numpy
 tqdm
 scikit-learn
